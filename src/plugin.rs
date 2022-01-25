@@ -93,7 +93,7 @@ impl PluginHandler<Configuration> for VuePluginHandler {
                             &HashMap::new(),
                         )?);
                     } else {
-                        buffer.push_str(&content);
+                        buffer.push_str(content);
                     }
 
                     match buffer.chars().last() {

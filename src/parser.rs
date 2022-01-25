@@ -1,9 +1,9 @@
 use nom::{
     branch::alt,
-    bytes::complete::{tag, take_till, take_until, take_until1, take_while, take_while1},
+    bytes::complete::{tag, take_till, take_until, take_while, take_while1},
     character::complete::{char, newline},
-    combinator::{consumed, flat_map, map, opt, peek, recognize, rest},
-    complete::take,
+    combinator::{consumed, flat_map, opt, peek, recognize, rest},
+    error::ErrorKind,
     multi::{many0, many_till},
     sequence::{delimited, pair, preceded, terminated, tuple},
     IResult, Parser,
@@ -33,7 +33,7 @@ fn is_ascii_whitespace(char: char) -> bool {
     char.is_ascii_whitespace()
 }
 
-// https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
+/// See <https://html.spec.whatwg.org/multipage/syntax.html#attributes-2>.
 fn parse_attribute_name(input: &str) -> IResult<&str, &str> {
     take_while1(|char: char| {
         !matches!(char,
@@ -99,10 +99,12 @@ fn parse_attribute(input: &str) -> IResult<&str, (&str, Option<&str>)> {
     )(input)
 }
 
+/// See <https://html.spec.whatwg.org/multipage/syntax.html#syntax-tag-name>.
 fn parse_tag_name(input: &str) -> IResult<&str, &str> {
     take_till(|char: char| char.is_ascii_whitespace() || char == '/' || char == '>')(input)
 }
 
+/// See <https://html.spec.whatwg.org/multipage/syntax.html#start-tags>.
 fn parse_start_tag(input: &str) -> IResult<&str, StartTag> {
     let (input, _) = char('<')(input)?;
 
@@ -123,13 +125,56 @@ fn parse_start_tag(input: &str) -> IResult<&str, StartTag> {
     Ok((input, StartTag { name, lang }))
 }
 
-fn parse_tag_content<'a>(tag_name: &'a str) -> impl FnMut(&'a str) -> IResult<&'a str, &'a str> {
-    recognize(many_till(
-        preceded(opt(char('<')), take_until("<")),
-        peek(parse_end_tag(tag_name)),
-    ))
+fn take_until_next<'a>(pat: &'a str) -> impl FnMut(&'a str) -> IResult<&'a str, &'a str> {
+    preceded(opt(tag(pat)), take_until(pat))
 }
 
+fn parse_tag_content<'a>(tag_name: &'a str) -> impl FnMut(&'a str) -> IResult<&'a str, &'a str> {
+    move |input: &str| {
+        let mut nesting_level = 0u16;
+        let mut index = match input.find('<') {
+            Some(index) => index,
+            None => {
+                return Err(nom::Err::Error(nom::error::Error::new(
+                    input,
+                    ErrorKind::TakeUntil,
+                )))
+            }
+        };
+
+        while !input[index..].is_empty() {
+            if let Ok((_, start_tag)) = parse_start_tag(&input[index..]) {
+                if start_tag.name == tag_name {
+                    nesting_level += 1;
+                }
+            } else if let Ok((_, _)) = parse_end_tag(tag_name)(&input[index..]) {
+                if nesting_level == 0 {
+                    return Ok((&input[index..], &input[..index]));
+                }
+
+                nesting_level -= 1;
+            }
+
+            index += match input.get((index + 1)..).and_then(|input| input.find('<')) {
+                Some(index) => index + 1,
+                None => {
+                    return Err(nom::Err::Error(nom::error::Error::new(
+                        input,
+                        ErrorKind::TakeUntil,
+                    )))
+                }
+            };
+        }
+
+        Err(nom::Err::Error(nom::error::Error::new(
+            input,
+            ErrorKind::TakeUntil,
+        )))
+    }
+}
+
+/// Parse an end tag with the given `tag_name`.
+/// See <https://html.spec.whatwg.org/multipage/syntax.html#end-tags>.
 fn parse_end_tag<'a>(tag_name: &'a str) -> impl FnMut(&'a str) -> IResult<&'a str, &'a str> {
     delimited(
         tag("</"),
@@ -150,9 +195,9 @@ fn parse_block(input: &str) -> IResult<&str, Block> {
             ))
             .map(move |(content, raw_end_tag)| Block {
                 start_tag,
-                content,
                 raw_start_tag,
                 raw_end_tag,
+                content,
             })
         },
     )
@@ -163,10 +208,7 @@ fn parse_section(input: &str) -> IResult<&str, Section> {
     alt((
         parse_block.map(Section::Block),
         alt((
-            recognize(many_till(
-                preceded(opt(char('<')), take_until("<")),
-                peek(parse_block),
-            )),
+            recognize(many_till(take_until_next("<"), peek(parse_block))),
             rest,
         ))
         .map(Section::Root),
@@ -177,7 +219,8 @@ pub fn parse_file(mut input: &str) -> Result<Vec<Section>, anyhow::Error> {
     let mut buffer = Vec::new();
 
     loop {
-        let (remaining, section) = parse_section(input).map_err(|err| err.to_owned())?;
+        let (remaining, section) =
+            parse_section(input).map_err(|err| anyhow::Error::from(err.to_owned()))?;
 
         buffer.push(section);
 
@@ -270,6 +313,11 @@ mod test {
                 "</script>",
                 "let value = Math.random();\nconsole.log(value < 0.5);\n"
             ))
+        );
+
+        assert_eq!(
+            parse_tag_content("template")("<template></template></template>"),
+            Ok(("</template>", "<template></template>"))
         );
     }
 

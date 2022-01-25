@@ -18,10 +18,10 @@ mod test {
     use crate::{configuration::Configuration, plugin::VuePluginHandler};
 
     #[test]
-    fn ts() {
+    fn test_format_file() {
         let mut buffer = Vec::new();
 
-        let raw = include_str!("../test/ts.vue");
+        let raw = include_str!("../test/file.vue");
         let path = PathBuf::from("ts.vue");
 
         let result = VuePluginHandler::new().format_text(
@@ -40,6 +40,10 @@ mod test {
         assert_eq!(
             buffer,
             vec![
+                (
+                    PathBuf::from("file.html"),
+                    String::from("    <template>\n        <template></template>\n        <template></template>\n    </template>\n    <template></template>\n    <template></template>\n")
+                ),
                 (
                     PathBuf::from("file.ts"),
                     String::from("import { ExclamationIcon } from '@heroicons/vue/solid';\nimport { Dialog, DialogOverlay, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';\nimport { watch } from \"vue\";\n\nimport type { NewQuoteRequest, QuoteRequest, QuoteRequestId, QuoteRequestPatch } from \"@/resources/quoteRequests\";\nimport type { ApiError, AbortError, NetworkError } from \"@/error\";\nimport { usePassport } from \"@/passport\";\nimport { createQuoteRequest, retrieveQuoteRequest, updateQuoteRequest, destroyQuoteRequest } from \"@/resources/quoteRequests\";\n\n"),

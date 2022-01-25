@@ -1,3 +1,12 @@
+<template>
+    <template>
+        <template></template>
+        <template></template>
+    </template>
+    <template></template>
+    <template></template>
+</template>
+
 <script lang="ts" setup>
 import { ExclamationIcon } from '@heroicons/vue/solid';
 import { Dialog, DialogOverlay, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
