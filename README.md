@@ -15,3 +15,10 @@ This means you also need to install plugins for languages you want to format,
 such as
 [`dprint-plugin-typescript`](https://github.com/dprint/dprint-plugin-typescript)
 for JavaScript / TypeScript.
+
+## Binaries
+
+The latest version of the plugin can be downloaded from this url:
+```
+https://github.com/malobre/dprint-plugin-vue/releases/latest/download/dprint_plugin_vue.wasm
+```
