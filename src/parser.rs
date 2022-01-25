@@ -9,16 +9,16 @@ pub fn parse_file(mut input: &str) -> Result<Vec<Section>, anyhow::Error> {
     let mut buffer = Vec::new();
 
     loop {
+        if input.is_empty() {
+            break;
+        }
+
         let (remaining, section) =
             section::parse_section(input).map_err(|err| anyhow::Error::from(err.to_owned()))?;
 
         buffer.push(section);
 
         input = remaining;
-
-        if input.is_empty() {
-            break;
-        }
     }
 
     Ok(buffer)

@@ -1,5 +1,5 @@
-pub(crate) mod parser;
-pub(crate) mod plugin;
+mod parser;
+mod plugin;
 
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 mod wasm {

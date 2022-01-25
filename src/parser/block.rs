@@ -13,15 +13,21 @@ use super::util::is_ascii_whitespace;
 
 #[derive(Debug, PartialEq)]
 pub struct Block<'a> {
+    /// The parsed start tag.
     pub start_tag: StartTag<'a>,
+    /// The start tag as it appears in the source file.
     pub raw_start_tag: &'a str,
+    /// The end tag as it appears in the source file.
     pub raw_end_tag: &'a str,
+    /// The content of the block, excluding the first char if it is a newline.
     pub content: &'a str,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct StartTag<'a> {
+    /// The tag name such as `template`, `script`, `style`, etc.
     pub name: &'a str,
+    /// The `lang` attribute is there is one.
     pub lang: Option<&'a str>,
 }
 
@@ -74,6 +80,7 @@ fn parse_attribute_name(input: &str) -> IResult<&str, &str> {
     })(input)
 }
 
+/// See <https://html.spec.whatwg.org/multipage/syntax.html#attributes-2>.
 fn parse_attribute(input: &str) -> IResult<&str, (&str, Option<&str>)> {
     pair(
         parse_attribute_name,
@@ -98,25 +105,28 @@ fn parse_tag_name(input: &str) -> IResult<&str, &str> {
 
 /// See <https://html.spec.whatwg.org/multipage/syntax.html#start-tags>.
 fn parse_start_tag(input: &str) -> IResult<&str, StartTag> {
-    let (input, _) = char('<')(input)?;
+    delimited(
+        char('<'),
+        tuple((
+            parse_tag_name,
+            many0(preceded(take_while(is_ascii_whitespace), parse_attribute)),
+        )),
+        tuple((take_while(is_ascii_whitespace), opt(char('/')), char('>'))),
+    )
+    .map(|(name, attributes)| {
+        let lang = attributes
+            .into_iter()
+            .find_map(|attribute| match attribute {
+                ("lang", Some(lang)) => Some(lang),
+                _ => None,
+            });
 
-    let (input, name) = parse_tag_name(input)?;
-
-    let (input, attributes) =
-        many0(preceded(take_while(is_ascii_whitespace), parse_attribute))(input)?;
-
-    let lang = attributes
-        .into_iter()
-        .find_map(|attribute| match attribute {
-            ("lang", Some(lang)) => Some(lang),
-            _ => None,
-        });
-
-    let (input, _) = tuple((take_while(is_ascii_whitespace), opt(char('/')), char('>')))(input)?;
-
-    Ok((input, StartTag { name, lang }))
+        StartTag { name, lang }
+    })
+    .parse(input)
 }
 
+/// Return the string until the corresponding end tag.
 fn parse_tag_content<'a>(tag_name: &'a str) -> impl FnMut(&'a str) -> IResult<&'a str, &'a str> {
     move |input: &str| {
         let mut nesting_level = 0u16;
@@ -171,6 +181,7 @@ fn parse_end_tag<'a>(tag_name: &'a str) -> impl FnMut(&'a str) -> IResult<&'a st
     )
 }
 
+/// Parse a block such as `<template lang="html"><!-- content --></template>`.
 pub fn parse_block(input: &str) -> IResult<&str, Block> {
     flat_map(
         terminated(consumed(parse_start_tag), opt(newline)),

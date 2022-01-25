@@ -7,9 +7,12 @@ use nom::{
 
 use super::{block::parse_block, util::take_until_next, Block};
 
+/// Represent the sections of a Vue SFC.
 #[derive(Debug, PartialEq)]
 pub enum Section<'a> {
+    /// Represent any data before, after or between blocks.
     Root(&'a str),
+    /// See [`Block`].
     Block(Block<'a>),
 }
 
