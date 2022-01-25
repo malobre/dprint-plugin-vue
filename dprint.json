@@ -1,0 +1,12 @@
+{
+  "incremental": true,
+  "typescript": {},
+  "includes": ["**/*.{ts,tsx,js,jsx,cjs,mjs}"],
+  "excludes": [
+    "target"
+  ],
+  "plugins": [
+    "https://plugins.dprint.dev/typescript-0.62.0.wasm",
+    "./target/wasm32-unknown-unknown/release/dprint_plugin_vue.wasm"
+  ]
+}
