@@ -3,13 +3,13 @@ use std::path::Path;
 use std::path::PathBuf;
 
 use anyhow::Result;
+use dprint_core::configuration::get_unknown_property_diagnostics;
 use dprint_core::configuration::ConfigKeyMap;
 use dprint_core::configuration::GlobalConfiguration;
 use dprint_core::configuration::ResolveConfigurationResult;
 use dprint_core::plugins::PluginHandler;
 use dprint_core::plugins::PluginInfo;
 
-use crate::configuration::{self, Configuration};
 use crate::parser::parse_file;
 use crate::parser::Block;
 use crate::parser::Section;
@@ -32,7 +32,7 @@ impl VuePluginHandler {
     }
 }
 
-impl PluginHandler<Configuration> for VuePluginHandler {
+impl PluginHandler<()> for VuePluginHandler {
     fn get_plugin_info(&mut self) -> PluginInfo {
         PluginInfo {
             name: env!("CARGO_PKG_NAME").to_string(),
@@ -52,16 +52,19 @@ impl PluginHandler<Configuration> for VuePluginHandler {
     fn resolve_config(
         &mut self,
         config: ConfigKeyMap,
-        global_config: &GlobalConfiguration,
-    ) -> ResolveConfigurationResult<Configuration> {
-        configuration::resolve_config(config, global_config)
+        _global_config: &GlobalConfiguration,
+    ) -> ResolveConfigurationResult<()> {
+        ResolveConfigurationResult {
+            config: (),
+            diagnostics: get_unknown_property_diagnostics(config),
+        }
     }
 
     fn format_text(
         &mut self,
         _file_path: &Path,
         file_text: &str,
-        _config: &Configuration,
+        _config: &(),
         mut format_with_host: impl FnMut(&Path, String, &ConfigKeyMap) -> Result<String>,
     ) -> Result<String> {
         let mut buffer = String::new();
