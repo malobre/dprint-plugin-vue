@@ -22,3 +22,11 @@ The latest version of the plugin can be downloaded from this url:
 ```
 https://github.com/malobre/dprint-plugin-vue/releases/latest/download/dprint_plugin_vue.wasm
 ```
+
+## Configuration
+
+| Key              | Default | Description                                |
+| ---------------- | ------- | ------------------------------------------ |
+| `indentTemplate` | `true`  | Indent the content of the `<template>` tag |
+| `indentWidth`    | `2`     | Width of the indentation                   |
+| `useTabs`        | `false` | Use tabs for indentation                   |

@@ -1,3 +1,4 @@
+mod configuration;
 mod parser;
 mod plugin;
 
@@ -7,9 +8,8 @@ mod wasm {
     #![allow(unused_must_use)]
     #![allow(clippy::mut_from_ref)]
 
-    use crate::plugin::VuePluginHandler;
+    use crate::{configuration::Configuration, plugin::VuePluginHandler};
     use dprint_core::plugins::PluginHandler;
-    type Configuration = ();
     dprint_core::generate_plugin_code!(VuePluginHandler, VuePluginHandler::new());
 }
 
@@ -19,7 +19,7 @@ mod test {
 
     use dprint_core::plugins::PluginHandler;
 
-    use crate::plugin::VuePluginHandler;
+    use crate::{configuration::Configuration, plugin::VuePluginHandler};
 
     #[test]
     fn test_format_file() {
@@ -28,11 +28,16 @@ mod test {
         let raw = include_str!("../test/file.vue");
         let path = PathBuf::from("ts.vue");
 
-        let result = VuePluginHandler::new().format_text(&path, raw, &(), |path, data, _config| {
-            buffer.push((path.to_owned(), data.clone()));
+        let result = VuePluginHandler::new().format_text(
+            &path,
+            raw,
+            &Configuration::default(),
+            |path, data, _config| {
+                buffer.push((path.to_owned(), data.clone()));
 
-            Ok(data)
-        });
+                Ok(data)
+            },
+        );
 
         assert_eq!(result.unwrap(), raw);
 
