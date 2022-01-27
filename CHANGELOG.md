@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Block tag names are now compared case-insensitively.
 - Block content is passed to dprint with `file.vue.{lang}` as its filename.
 
-## [0.2.0] - 2021-01-25
+## [0.2.0] - 2022-01-25
 
 ### Added
 
@@ -36,13 +36,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Removed `Configuration`.
 
-## [0.1.1] - 2021-01-25
+## [0.1.1] - 2022-01-25
 
 ### Fixed
 
 - Fix nested tags parsing (#1).
 
-## [0.1.0] - 2021-01-25
+## [0.1.0] - 2022-01-25
 
 ### Added
 
