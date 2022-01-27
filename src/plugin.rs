@@ -84,7 +84,7 @@ impl PluginHandler<Configuration> for VuePluginHandler {
                     let lang = lang.or_else(|| Self::default_lang(name));
 
                     if let Some(lang) = lang {
-                        let file_path = PathBuf::from(format!("file.{}", lang));
+                        let file_path = PathBuf::from(format!("file.vue.{lang}"));
 
                         let pretty = {
                             let pretty = format_with_host(

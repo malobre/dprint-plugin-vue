@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Formatted content is now end-trimmed.
 - Block tag names are now compared case-insensitively.
+- Block content is passed to dprint with `file.vue.{lang}` as its filename.
 
 ## [0.2.0] - 2021-01-25
 
