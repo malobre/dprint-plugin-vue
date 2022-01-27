@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::iter::repeat;
 use std::path::Path;
 use std::path::PathBuf;
 
@@ -99,16 +100,21 @@ impl PluginHandler<Configuration> for VuePluginHandler {
                                 && name.eq_ignore_ascii_case("template")
                                 && config.indent_template
                             {
-                                pretty.replace('\n', {
-                                    let width = usize::from(config.indent_width);
-                                    let indent = if config.use_tabs {
-                                        format!("{:\t<width$}", "")
-                                    } else {
-                                        format!("{: <width$}", "")
-                                    };
+                                let new_line_indent = {
+                                    let indent_width = usize::from(config.indent_width);
 
-                                    &format!("\n{}", indent)
-                                })
+                                    let mut new_line_indent =
+                                        String::with_capacity(indent_width + 1);
+                                    new_line_indent.push('\n');
+                                    new_line_indent.extend(
+                                        repeat(if config.use_tabs { '\t' } else { ' ' })
+                                            .take(indent_width),
+                                    );
+
+                                    new_line_indent
+                                };
+
+                                pretty.replace('\n', &new_line_indent)
                             } else {
                                 pretty
                             }
