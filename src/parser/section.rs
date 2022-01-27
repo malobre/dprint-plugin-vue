@@ -11,7 +11,7 @@ use super::{block::parse_block, util::take_until_next, Block};
 #[derive(Debug, PartialEq)]
 pub enum Section<'a> {
     /// Represent any data before, after or between blocks.
-    Root(&'a str),
+    Raw(&'a str),
     /// See [`Block`].
     Block(Block<'a>),
 }
@@ -23,7 +23,7 @@ pub fn parse_section(input: &str) -> IResult<&str, Section> {
             recognize(many_till(take_until_next("<"), peek(parse_block))),
             rest,
         ))
-        .map(Section::Root),
+        .map(Section::Raw),
     ))(input)
 }
 
@@ -41,7 +41,7 @@ mod test {
             ),
             Ok((
                 "<script>\nlet value = true;\nconsole.log(value);\n</script>",
-                Section::Root("<!-- A comment -->\n")
+                Section::Raw("<!-- A comment -->\n")
             ))
         );
 
@@ -63,7 +63,7 @@ mod test {
 
         assert_eq!(
             parse_section("<!-- A comment -->"),
-            Ok(("", Section::Root("<!-- A comment -->")))
+            Ok(("", Section::Raw("<!-- A comment -->")))
         );
     }
 }

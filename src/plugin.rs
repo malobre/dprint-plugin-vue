@@ -71,7 +71,7 @@ impl PluginHandler<Configuration> for VuePluginHandler {
 
         for section in sections {
             match section {
-                Section::Root(value) => buffer.push_str(value),
+                Section::Raw(text) => buffer.push_str(text),
                 Section::Block(Block {
                     start_tag: StartTag { name, lang },
                     content,

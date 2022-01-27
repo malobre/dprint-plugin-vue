@@ -41,7 +41,7 @@ mod test {
             )
             .unwrap(),
             vec![
-                Section::Root("<!-- A comment -->\n"),
+                Section::Raw("<!-- A comment -->\n"),
                 Section::Block(Block {
                     start_tag: StartTag {
                         name: "script",
