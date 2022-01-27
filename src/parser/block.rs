@@ -98,17 +98,12 @@ fn parse_attribute(input: &str) -> IResult<&str, (&str, Option<&str>)> {
     )(input)
 }
 
-/// See <https://html.spec.whatwg.org/multipage/syntax.html#syntax-tag-name>.
-fn parse_tag_name(input: &str) -> IResult<&str, &str> {
-    take_till(|char: char| char.is_ascii_whitespace() || char == '/' || char == '>')(input)
-}
-
 /// See <https://html.spec.whatwg.org/multipage/syntax.html#start-tags>.
 fn parse_start_tag(input: &str) -> IResult<&str, StartTag> {
     delimited(
         char('<'),
         tuple((
-            parse_tag_name,
+            take_till(|char: char| char.is_ascii_whitespace() || char == '/' || char == '>'),
             many0(preceded(take_while(is_ascii_whitespace), parse_attribute)),
         )),
         tuple((take_while(is_ascii_whitespace), opt(char('/')), char('>'))),
@@ -142,15 +137,17 @@ fn parse_tag_content<'a>(tag_name: &'a str) -> impl FnMut(&'a str) -> IResult<&'
 
         while !input[index..].is_empty() {
             if let Ok((_, start_tag)) = parse_start_tag(&input[index..]) {
-                if start_tag.name == tag_name {
+                if start_tag.name.eq_ignore_ascii_case(tag_name) {
                     nesting_level += 1;
                 }
-            } else if let Ok((_, _)) = parse_end_tag(tag_name)(&input[index..]) {
-                if nesting_level == 0 {
-                    return Ok((&input[index..], &input[..index]));
-                }
+            } else if let Ok((_, end_tag_name)) = parse_end_tag(&input[index..]) {
+                if end_tag_name.eq_ignore_ascii_case(tag_name) {
+                    if nesting_level == 0 {
+                        return Ok((&input[index..], &input[..index]));
+                    }
 
-                nesting_level -= 1;
+                    nesting_level -= 1;
+                }
             }
 
             index += match input.get((index + 1)..).and_then(|input| input.find('<')) {
@@ -171,14 +168,13 @@ fn parse_tag_content<'a>(tag_name: &'a str) -> impl FnMut(&'a str) -> IResult<&'
     }
 }
 
-/// Parse an end tag with the given `tag_name`.
 /// See <https://html.spec.whatwg.org/multipage/syntax.html#end-tags>.
-fn parse_end_tag<'a>(tag_name: &'a str) -> impl FnMut(&'a str) -> IResult<&'a str, &'a str> {
+fn parse_end_tag(input: &str) -> IResult<&str, &str> {
     delimited(
         tag("</"),
-        tag(tag_name),
+        take_till(|char: char| char.is_ascii_whitespace() || char == '>'),
         tuple((take_while(is_ascii_whitespace), char('>'))),
-    )
+    )(input)
 }
 
 /// Parse a block such as `<template lang="html"><!-- content --></template>`.
@@ -188,16 +184,14 @@ pub fn parse_block(input: &str) -> IResult<&str, Block> {
         |(raw_start_tag, start_tag)| {
             let tag_name = start_tag.name;
 
-            tuple((
-                parse_tag_content(tag_name),
-                recognize(parse_end_tag(tag_name)),
-            ))
-            .map(move |(content, raw_end_tag)| Block {
-                start_tag,
-                raw_start_tag,
-                raw_end_tag,
-                content,
-            })
+            tuple((parse_tag_content(tag_name), recognize(parse_end_tag))).map(
+                move |(content, raw_end_tag)| Block {
+                    start_tag,
+                    raw_start_tag,
+                    raw_end_tag,
+                    content,
+                },
+            )
         },
     )
     .parse(input)
@@ -207,7 +201,7 @@ pub fn parse_block(input: &str) -> IResult<&str, Block> {
 mod test {
     use super::{
         parse_attribute, parse_attribute_name, parse_block, parse_end_tag, parse_start_tag,
-        parse_tag_content, parse_tag_name, Block, StartTag,
+        parse_tag_content, Block, StartTag,
     };
 
     #[test]
@@ -233,19 +227,51 @@ mod test {
     }
 
     #[test]
-    fn test_parse_tag_name() {
-        assert_eq!(parse_tag_name("script>"), Ok((">", "script")));
-        assert_eq!(parse_tag_name("script >"), Ok((" >", "script")));
-        assert_eq!(parse_tag_name("script\t>"), Ok(("\t>", "script")));
-        assert_eq!(parse_tag_name("script \t>"), Ok((" \t>", "script")));
-        assert_eq!(
-            parse_tag_name(r#"script lang="ts">"#),
-            Ok((r#" lang="ts">"#, "script"))
-        );
-    }
-
-    #[test]
     fn test_parse_start_tag() {
+        assert_eq!(
+            parse_start_tag("<script>"),
+            Ok((
+                "",
+                StartTag {
+                    name: "script",
+                    lang: None
+                }
+            ))
+        );
+
+        assert_eq!(
+            parse_start_tag("<script >"),
+            Ok((
+                "",
+                StartTag {
+                    name: "script",
+                    lang: None
+                }
+            ))
+        );
+
+        assert_eq!(
+            parse_start_tag("<script\t>"),
+            Ok((
+                "",
+                StartTag {
+                    name: "script",
+                    lang: None
+                }
+            ))
+        );
+
+        assert_eq!(
+            parse_start_tag("<script \t>"),
+            Ok((
+                "",
+                StartTag {
+                    name: "script",
+                    lang: None
+                }
+            ))
+        );
+
         assert_eq!(
             parse_start_tag(r#"<script lang="ts" setup>"#),
             Ok((
@@ -260,10 +286,10 @@ mod test {
 
     #[test]
     fn test_parse_end_tag() {
-        assert_eq!(parse_end_tag("script")("</script>"), Ok(("", "script")));
-        assert_eq!(parse_end_tag("script")("</script >"), Ok(("", "script")));
-        assert_eq!(parse_end_tag("script")("</script\t>"), Ok(("", "script")));
-        assert_eq!(parse_end_tag("script")("</script \t>"), Ok(("", "script")));
+        assert_eq!(parse_end_tag("</script>"), Ok(("", "script")));
+        assert_eq!(parse_end_tag("</script >"), Ok(("", "script")));
+        assert_eq!(parse_end_tag("</script\t>"), Ok(("", "script")));
+        assert_eq!(parse_end_tag("</script \t>"), Ok(("", "script")));
     }
 
     #[test]

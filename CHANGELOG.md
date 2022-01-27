@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Formatted content is now end-trimmed.
+- Block tag names are now compared case-insensitively.
 
 ## [0.2.0] - 2021-01-25
 
