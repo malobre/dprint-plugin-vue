@@ -125,45 +125,44 @@ fn parse_start_tag(input: &str) -> IResult<&str, StartTag> {
 fn parse_tag_content<'a>(tag_name: &'a str) -> impl FnMut(&'a str) -> IResult<&'a str, &'a str> {
     move |input: &str| {
         let mut nesting_level = 0u16;
-        let mut index = match input.find('<') {
-            Some(index) => index,
-            None => {
-                return Err(nom::Err::Error(nom::error::Error::new(
-                    input,
-                    ErrorKind::TakeUntil,
-                )))
-            }
-        };
+        if input.is_empty() {
+            return Err(nom::Err::Error(nom::error::Error::new(
+                input,
+                ErrorKind::Eof,
+            )));
+        }
 
-        while !input[index..].is_empty() {
-            if let Ok((_, start_tag)) = parse_start_tag(&input[index..]) {
-                if start_tag.name.eq_ignore_ascii_case(tag_name) {
-                    nesting_level += 1;
-                }
-            } else if let Ok((_, end_tag_name)) = parse_end_tag(&input[index..]) {
-                if end_tag_name.eq_ignore_ascii_case(tag_name) {
-                    if nesting_level == 0 {
-                        return Ok((&input[index..], &input[..index]));
+        if let Some(mut index) = input.find('<') {
+            while !input[index..].is_empty() {
+                if let Ok((_, start_tag)) = parse_start_tag(&input[index..]) {
+                    if start_tag.name.eq_ignore_ascii_case(tag_name) {
+                        nesting_level += 1;
                     }
+                } else if let Ok((_, end_tag_name)) = parse_end_tag(&input[index..]) {
+                    if end_tag_name.eq_ignore_ascii_case(tag_name) {
+                        if nesting_level == 0 {
+                            return Ok((&input[index..], &input[..index]));
+                        }
 
-                    nesting_level -= 1;
+                        nesting_level -= 1;
+                    }
                 }
+
+                index += match input.get((index + 1)..).and_then(|input| input.find('<')) {
+                    Some(index) => index + 1,
+                    None => {
+                        return Err(nom::Err::Error(nom::error::Error::new(
+                            input,
+                            ErrorKind::Eof,
+                        )))
+                    }
+                };
             }
-
-            index += match input.get((index + 1)..).and_then(|input| input.find('<')) {
-                Some(index) => index + 1,
-                None => {
-                    return Err(nom::Err::Error(nom::error::Error::new(
-                        input,
-                        ErrorKind::TakeUntil,
-                    )))
-                }
-            };
         }
 
         Err(nom::Err::Error(nom::error::Error::new(
             input,
-            ErrorKind::TakeUntil,
+            ErrorKind::Eof,
         )))
     }
 }
