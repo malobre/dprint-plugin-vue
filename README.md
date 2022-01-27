@@ -18,10 +18,9 @@ for JavaScript / TypeScript.
 
 ## Binaries
 
-The latest version of the plugin can be downloaded from this url:
-
+The latest version of the plugin can be downloaded from the github releases page or from `plugins.dprint.dev`:
 ```
-https://github.com/malobre/dprint-plugin-vue/releases/latest/download/dprint_plugin_vue.wasm
+https://plugins.dprint.dev/malobre/vue-latest.wasm
 ```
 
 ## Configuration
