@@ -114,7 +114,7 @@ impl PluginHandler<Configuration> for VuePluginHandler {
                             }
                         };
 
-                        buffer.push_str(&pretty);
+                        buffer.push_str(pretty.trim_end());
                     } else {
                         buffer.push_str(content);
                     }

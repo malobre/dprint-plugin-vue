@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   | `indentWidth`    | `2`     | Width of the indentation                   |
   | `useTabs`        | `false` | Use tabs for indentation                   |
 
+### Changed
+
+- Formatted content is now end-trimmed.
+
 ## [0.2.0] - 2021-01-25
 
 ### Added
