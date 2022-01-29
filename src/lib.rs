@@ -1,4 +1,5 @@
 mod configuration;
+mod format;
 mod parser;
 mod plugin;
 
