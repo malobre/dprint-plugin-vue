@@ -88,33 +88,28 @@ impl PluginHandler<Configuration> for VuePluginHandler {
                         let file_path = PathBuf::from(format!("file.vue.{lang}"));
 
                         let pretty = {
-                            let pretty = format_with_host(
-                                &file_path,
-                                String::from(content),
-                                &HashMap::new(),
-                            )?;
+                            let pretty =
+                                format_with_host(&file_path, String::from(content), &HashMap::new())?;
 
-                            let is_formatted = pretty != content;
-
-                            if is_formatted
-                                && name.eq_ignore_ascii_case("template")
+                            if name.eq_ignore_ascii_case("template")
                                 && config.indent_template
                             {
-                                let new_line_indent = {
-                                    let indent_width = usize::from(config.indent_width);
+                                let indent_width = usize::from(config.indent_width);
 
-                                    let mut new_line_indent =
-                                        String::with_capacity(indent_width + 1);
-                                    new_line_indent.push('\n');
-                                    new_line_indent.extend(
+                                let mut buffer = String::with_capacity(
+                                    pretty.len() + pretty.lines().count() * indent_width,
+                                );
+
+                                for line in pretty.trim_start().lines() {
+                                    buffer.extend(
                                         repeat(if config.use_tabs { '\t' } else { ' ' })
                                             .take(indent_width),
                                     );
+                                    buffer.push_str(line);
+                                    buffer.push('\n');
+                                }
 
-                                    new_line_indent
-                                };
-
-                                pretty.replace('\n', &new_line_indent)
+                                buffer
                             } else {
                                 pretty
                             }
