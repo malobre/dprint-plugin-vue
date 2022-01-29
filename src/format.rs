@@ -93,3 +93,41 @@ pub fn format(
 
     Ok(buffer)
 }
+#[cfg(test)]
+mod test {
+    use std::path::Path;
+
+    use crate::configuration::Configuration;
+
+    use super::format;
+
+    #[test]
+    fn test_indent_template() {
+        let config = Configuration {
+            indent_template: true,
+            use_tabs: false,
+            indent_width: 2,
+        };
+
+        let raw = "<template><div></div></template>";
+        let pretty = format(Path::new("file.vue"), raw, &config, |_, raw, _| {
+            Ok(raw)
+        })
+        .unwrap();
+
+        assert_eq!(
+            pretty,
+            "<template>\n  <div></div>\n</template>"
+        );
+
+        let pretty = format(Path::new("file.vue"), &pretty, &config, |_, raw, _| {
+            Ok(raw)
+        })
+        .unwrap();
+
+        assert_eq!(
+            pretty,
+            "<template>\n  <div></div>\n</template>"
+        );
+    }
+}
