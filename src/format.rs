@@ -52,9 +52,7 @@ pub fn format(
                         let pretty =
                             format_with_host(&file_path, String::from(content), &HashMap::new())?;
 
-                        if name.eq_ignore_ascii_case("template")
-                            && config.indent_template
-                        {
+                        if name.eq_ignore_ascii_case("template") && config.indent_template {
                             let indent_width = usize::from(config.indent_width);
 
                             let mut buffer = String::with_capacity(
@@ -95,11 +93,34 @@ pub fn format(
 }
 #[cfg(test)]
 mod test {
-    use std::path::Path;
+    use std::path::{Path, PathBuf};
 
     use crate::configuration::Configuration;
 
     use super::format;
+
+    #[test]
+    fn test_format_with_host() {
+        let config = Configuration {
+            indent_template: true,
+            use_tabs: false,
+            indent_width: 2,
+        };
+
+        let raw = "<template></template><script></script>";
+
+        let mut buffer = Vec::new();
+
+        format(Path::new("file.vue"), raw, &config, |path, content, _| {
+            buffer.push((path.to_owned(), content.clone()));
+            Ok(content)
+        })
+        .unwrap();
+
+        assert_eq!(buffer[0], (PathBuf::from("file.vue.html"), String::new()));
+
+        assert_eq!(buffer[1], (PathBuf::from("file.vue.js"), String::new()));
+    }
 
     #[test]
     fn test_indent_template() {
@@ -110,24 +131,12 @@ mod test {
         };
 
         let raw = "<template><div></div></template>";
-        let pretty = format(Path::new("file.vue"), raw, &config, |_, raw, _| {
-            Ok(raw)
-        })
-        .unwrap();
+        let pretty = format(Path::new("file.vue"), raw, &config, |_, raw, _| Ok(raw)).unwrap();
 
-        assert_eq!(
-            pretty,
-            "<template>\n  <div></div>\n</template>"
-        );
+        assert_eq!(pretty, "<template>\n  <div></div>\n</template>");
 
-        let pretty = format(Path::new("file.vue"), &pretty, &config, |_, raw, _| {
-            Ok(raw)
-        })
-        .unwrap();
+        let pretty = format(Path::new("file.vue"), &pretty, &config, |_, raw, _| Ok(raw)).unwrap();
 
-        assert_eq!(
-            pretty,
-            "<template>\n  <div></div>\n</template>"
-        );
+        assert_eq!(pretty, "<template>\n  <div></div>\n</template>");
     }
 }
