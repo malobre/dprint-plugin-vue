@@ -15,9 +15,12 @@ debug-assertions = false
 overflow-checks = false
 panic = "abort"
 
+[features]
+wasm = ["dprint-core/wasm"]
+
 [dependencies]
 anyhow = "1.0.52"
-dprint-core = { version = "0.49", features = ["wasm"] }
+dprint-core = { version = "0.49" }
 nom = "7.1"
 serde = { version = "1.0.136", features = ["derive"] }
 serde_json = "1"

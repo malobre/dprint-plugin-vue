@@ -16,12 +16,9 @@ such as
 [`dprint-plugin-typescript`](https://github.com/dprint/dprint-plugin-typescript)
 for JavaScript / TypeScript.
 
-## Binaries
+## Usage
 
-The latest version of the plugin can be downloaded from the github releases page or from `plugins.dprint.dev`:
-```
-https://plugins.dprint.dev/malobre/vue-latest.wasm
-```
+See the [GitHub Releases](https://github.com/malobre/dprint-plugin-vue/releases).
 
 ## Configuration
 

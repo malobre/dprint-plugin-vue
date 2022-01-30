@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+    tags:
+    - '*'
+
+jobs:
+  build:
+    name: test_release ubuntu-latest
+    runs-on: ubuntu-latest
+
+    env:
+      CARGO_INCREMENTAL: 0
+      RUST_BACKTRACE: full
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: 1.58.1
+        override: true
+    - name: Install wasm32 target
+      run: rustup target add wasm32-unknown-unknown
+
+    - name: Cache cargo
+      if: startsWith(github.ref, 'refs/tags/') != true
+      uses: Swatinem/rust-cache@v1
+
+    - name: Build release
+      run: cargo build --target wasm32-unknown-unknown --features wasm --release
+
+    - name: Test release
+      run: cargo test --release
+
+    - name: Get tag version
+      if: startsWith(github.ref, 'refs/tags/')
+      id: get_tag_version
+      run: echo ::set-output name=TAG_VERSION::${GITHUB_REF/refs\/tags\//}
+
+      # GITHUB RELEASE
+    - name: Pre-release
+      if: startsWith(github.ref, 'refs/tags/')
+      run: |
+        # rename the wasm file
+        (cd target/wasm32-unknown-unknown/release/ && mv dprint_plugin_vue.wasm plugin.wasm)
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        files: |
+          target/wasm32-unknown-unknown/release/plugin.wasm
+        body: |
+          ## Install
+
+          [Install](https://dprint.dev/install/) and [setup](https://dprint.dev/setup/) dprint.
+
+          Then in your project's dprint configuration file:
+
+          1. Specify the plugin url in the `"plugins"` array.
+          2. Ensure `.vue` file extensions are matched in an `"includes"` pattern.
+          3. Add a `"vue"` configuration property if desired.
+             ```jsonc
+             {
+               // ...etc...
+               "vue": {
+                 // vue config goes here
+               },
+               "includes": [
+                 "**/*.{vue}"
+               ],
+               "plugins": [
+                 "https://plugins.dprint.dev/malobre/vue-v${{ steps.get_tag_version.outputs.TAG_VERSION }}.wasm"
+               ]
+             }
+             ```
+        draft: false
