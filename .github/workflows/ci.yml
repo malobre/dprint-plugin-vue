@@ -76,7 +76,7 @@ jobs:
                  "**/*.{vue}"
                ],
                "plugins": [
-                 "https://plugins.dprint.dev/malobre/vue-v${{ steps.get_tag_version.outputs.TAG_VERSION }}.wasm"
+                 "https://plugins.dprint.dev/malobre/vue-${{ steps.get_tag_version.outputs.TAG_VERSION }}.wasm"
                ]
              }
              ```
