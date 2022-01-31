@@ -46,11 +46,11 @@ impl PluginHandler<Configuration> for VuePluginHandler {
 
     fn format_text(
         &mut self,
-        file_path: &Path,
+        _file_path: &Path,
         file_text: &str,
         config: &Configuration,
         format_with_host: impl FnMut(&Path, String, &ConfigKeyMap) -> Result<String>,
     ) -> Result<String> {
-        crate::format::format(file_path, file_text, config, format_with_host)
+        crate::format::format(file_text, config, format_with_host)
     }
 }

@@ -22,7 +22,6 @@ fn default_lang(block: &str) -> Option<&'static str> {
 }
 
 pub fn format(
-    _path: &Path,
     content: &str,
     config: &Configuration,
     mut format_with_host: impl FnMut(&Path, String, &ConfigKeyMap) -> Result<String>,
@@ -93,7 +92,7 @@ pub fn format(
 }
 #[cfg(test)]
 mod test {
-    use std::path::{Path, PathBuf};
+    use std::path::PathBuf;
 
     use crate::configuration::Configuration;
 
@@ -111,7 +110,7 @@ mod test {
 
         let mut buffer = Vec::new();
 
-        format(Path::new("file.vue"), raw, &config, |path, content, _| {
+        format(raw, &config, |path, content, _| {
             buffer.push((path.to_owned(), content.clone()));
             Ok(content)
         })
@@ -131,11 +130,11 @@ mod test {
         };
 
         let raw = "<template><div></div></template>";
-        let pretty = format(Path::new("file.vue"), raw, &config, |_, raw, _| Ok(raw)).unwrap();
+        let pretty = format(raw, &config, |_, raw, _| Ok(raw)).unwrap();
 
         assert_eq!(pretty, "<template>\n  <div></div>\n</template>");
 
-        let pretty = format(Path::new("file.vue"), &pretty, &config, |_, raw, _| Ok(raw)).unwrap();
+        let pretty = format(&pretty, &config, |_, raw, _| Ok(raw)).unwrap();
 
         assert_eq!(pretty, "<template>\n  <div></div>\n</template>");
     }
