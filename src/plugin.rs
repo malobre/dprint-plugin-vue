@@ -26,8 +26,9 @@ impl PluginHandler<Configuration> for VuePluginHandler {
             config_key: String::from("vue"),
             file_extensions: vec![String::from("vue")],
             file_names: vec![],
-            help_url: String::new(),
+            help_url: "https://github.com/malobre/dprint-plugin-vue/".to_string(),
             config_schema_url: String::new(),
+            update_url: Some("https://plugins.dprint.dev/malobre/dprint-plugin-vue/latest.json".to_string()),
         }
     }
 
