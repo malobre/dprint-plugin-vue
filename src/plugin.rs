@@ -21,14 +21,16 @@ impl VuePluginHandler {
 impl PluginHandler<Configuration> for VuePluginHandler {
     fn get_plugin_info(&mut self) -> PluginInfo {
         PluginInfo {
-            name: env!("CARGO_PKG_NAME").to_string(),
-            version: env!("CARGO_PKG_VERSION").to_string(),
+            name: String::from(env!("CARGO_PKG_NAME")),
+            version: String::from(env!("CARGO_PKG_VERSION")),
             config_key: String::from("vue"),
             file_extensions: vec![String::from("vue")],
             file_names: vec![],
-            help_url: "https://github.com/malobre/dprint-plugin-vue/".to_string(),
+            help_url: String::from("https://github.com/malobre/dprint-plugin-vue"),
             config_schema_url: String::new(),
-            update_url: Some("https://plugins.dprint.dev/malobre/dprint-plugin-vue/latest.json".to_string()),
+            update_url: Some(String::from(
+                "https://plugins.dprint.dev/malobre/vue/latest.json",
+            )),
         }
     }
 
