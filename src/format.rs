@@ -1,4 +1,6 @@
+use std::borrow::Cow;
 use std::collections::HashMap;
+use std::fmt::Write;
 use std::iter::repeat;
 use std::path::Path;
 use std::path::PathBuf;
@@ -7,10 +9,7 @@ use anyhow::Result;
 use dprint_core::configuration::ConfigKeyMap;
 
 use crate::configuration::Configuration;
-use crate::parser::parse_file;
-use crate::parser::Block;
-use crate::parser::Section;
-use crate::parser::StartTag;
+use vue_sfc::{Block, Section};
 
 fn default_lang(block: &str) -> Option<&'static str> {
     match block {
@@ -29,65 +28,79 @@ pub fn format(
 ) -> Result<String> {
     let mut buffer = String::new();
 
-    let sections = parse_file(content)?;
+    let sections = vue_sfc::parse(content)?;
 
-    for section in sections {
-        match section {
-            Section::Raw(text) => buffer.push_str(text),
-            Section::Block(Block {
-                start_tag: StartTag { name, lang },
-                content,
-                raw_start_tag,
-                raw_end_tag,
-            }) => {
-                buffer.push_str(raw_start_tag);
-                buffer.push('\n');
+    for mut section in sections {
+        if let Section::Block(block) = section {
+            let lang = block
+                .attributes
+                .iter()
+                .find_map(|(name, value)| match (name.as_str(), value) {
+                    ("lang", Some(value)) => Some(value.as_str()),
+                    _ => None,
+                })
+                .or_else(|| default_lang(&block.name));
 
-                let lang = lang.or_else(|| default_lang(name));
+            if let Some(lang) = lang {
+                let file_path = PathBuf::from(format!("file.vue.{lang}"));
 
-                if let Some(lang) = lang {
-                    let file_path = PathBuf::from(format!("file.vue.{lang}"));
+                if block.name.as_str() == "template" && config.indent_template {
+                    // We compute a Hash to check if file content was formatted.
+                    // TODO: Remove hash check, blocked by:
+                    // <https://github.com/dprint/dprint/issues/462>.
+                    let original_hash = blake3::hash(block.content.as_bytes());
 
-                    let pretty = {
-                        let pretty =
-                            format_with_host(&file_path, String::from(content), &HashMap::new())?;
+                    let pretty =
+                        format_with_host(&file_path, block.content.into_owned(), &HashMap::new())?;
 
-                        if name.eq_ignore_ascii_case("template") && config.indent_template {
-                            let indent_width = usize::from(config.indent_width);
+                    let pretty_hash = blake3::hash(pretty.as_bytes());
 
-                            let mut buffer = String::with_capacity(
-                                pretty.len() + pretty.lines().count() * indent_width,
+                    // Only indent if file was formatted.
+                    let content = if original_hash != pretty_hash {
+                        let indent_width = usize::from(config.indent_width);
+
+                        let mut buffer = String::with_capacity(
+                            pretty.len() + pretty.lines().count() * indent_width,
+                        );
+
+                        for line in pretty.lines() {
+                            buffer.extend(
+                                repeat(if config.use_tabs { '\t' } else { ' ' }).take(indent_width),
                             );
-
-                            for line in pretty.trim_start().lines() {
-                                buffer.extend(
-                                    repeat(if config.use_tabs { '\t' } else { ' ' })
-                                        .take(indent_width),
-                                );
-                                buffer.push_str(line);
-                                buffer.push('\n');
-                            }
-
-                            buffer
-                        } else {
-                            pretty
+                            buffer.push_str(line);
+                            buffer.push('\n');
                         }
+
+                        buffer
+                    } else {
+                        pretty
                     };
 
-                    buffer.push_str(pretty.trim_end());
+                    section = Section::Block(Block {
+                        name: block.name,
+                        attributes: block.attributes,
+                        content: Cow::Owned(content),
+                    });
                 } else {
-                    buffer.push_str(content);
-                }
+                    let pretty =
+                        format_with_host(&file_path, block.content.into_owned(), &HashMap::new())?;
 
-                match buffer.chars().last() {
-                    Some('\n') => {}
-                    _ => buffer.push('\n'),
+                    section = Section::Block(Block {
+                        name: block.name,
+                        attributes: block.attributes,
+                        content: Cow::Owned(pretty),
+                    });
                 }
-
-                buffer.push_str(raw_end_tag);
+            } else {
+                section = Section::Block(block);
             }
         }
+
+        writeln!(&mut buffer, "{}", section)?;
+        writeln!(&mut buffer)?;
     }
+
+    buffer.truncate(buffer.trim_end().len());
 
     Ok(buffer)
 }
