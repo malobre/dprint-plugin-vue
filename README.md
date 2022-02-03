@@ -11,17 +11,38 @@ them through `dprint` according to the `lang` attribute or a default:
 | `template` | `html`  |
 | `style`    | `css`   |
 
-This means you also need to install plugins for languages you want to format,
-such as
-[`dprint-plugin-typescript`](https://github.com/dprint/dprint-plugin-typescript)
-for JavaScript / TypeScript.
+This means you also need to install plugins for languages contained in your Vue SFC, such as
+[`dprint-plugin-typescript`] for JavaScript / TypeScript.
 
-## Binaries
+[`dprint-plugin-typescript`]: https://github.com/dprint/dprint-plugin-typescript
 
-The latest version of the plugin can be downloaded from the github releases page or from `plugins.dprint.dev`:
-```
-https://plugins.dprint.dev/malobre/vue-latest.wasm
-```
+## Usage
+
+[Install](https://dprint.dev/install) and [setup](https://dprint.dev/setup) dprint, then:
+
+1. Run
+   ```shell
+   dprint config add malobre/vue
+   ```
+2. Install plugins for the languages contained in your vue files.
+3. Ensure `.vue` file extensions are matched in an `includes` pattern:
+   ```jsonc
+   {
+     // -- snip --
+     "includes": [
+       "**/*.vue"
+     ]
+   }
+   ```
+4. Add a `vue` configuration property if desired:
+   ```jsonc
+   {
+     // -- snip --
+     "vue": {
+       // vue config goes here
+     }
+   }
+   ```
 
 ## Configuration
 
