@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::fmt::Write;
 use std::iter::repeat;
@@ -65,39 +66,53 @@ fn format_block<'a>(
         .or_else(|| default_lang(&block.name));
 
     if let Some(lang) = lang {
-        let file_path = PathBuf::from(format!("file.vue.{lang}"));
-
-        let pretty = if block.name.as_str() == "template" && config.indent_template {
-            // We compute a hash to check if file content was formatted.
-            // If the content was formatted, it is indented.
-            // TODO: Remove hash check, blocked by:
-            // <https://github.com/dprint/dprint/issues/462>.
-            let original_hash = blake3::hash(block.content.as_bytes());
-
+        let pretty = {
+            let file_path = PathBuf::from(format!("file.vue.{lang}"));
             let pretty = format_with_host(&file_path, block.content.into_owned(), &HashMap::new())?;
 
-            let pretty_hash = blake3::hash(pretty.as_bytes());
+            let indent_width = pretty
+                .lines()
+                .map(|line| line.len() - line.trim_start().len())
+                .min()
+                .unwrap_or(0);
 
-            if original_hash == pretty_hash {
-                pretty
-            } else {
-                let indent_width = usize::from(config.indent_width);
+            let desired_indent_width =
+                if block.name.as_str() == "template" && config.indent_template {
+                    usize::from(config.indent_width)
+                } else {
+                    0
+                };
 
-                let mut buffer =
-                    String::with_capacity(pretty.len() + pretty.lines().count() * indent_width);
+            match indent_width.cmp(&desired_indent_width) {
+                Ordering::Equal => pretty,
+                Ordering::Less => {
+                    let delta = desired_indent_width - indent_width;
 
-                for line in pretty.lines() {
-                    buffer.extend(
-                        repeat(if config.use_tabs { '\t' } else { ' ' }).take(indent_width),
-                    );
-                    buffer.push_str(line);
-                    buffer.push('\n');
+                    let mut buffer =
+                        String::with_capacity(pretty.len() + pretty.lines().count() * delta);
+
+                    for line in pretty.lines() {
+                        buffer.extend(repeat(if config.use_tabs { '\t' } else { ' ' }).take(delta));
+                        buffer.push_str(line);
+                        buffer.push('\n');
+                    }
+
+                    buffer
                 }
+                Ordering::Greater => {
+                    let delta = indent_width - desired_indent_width;
 
-                buffer
+                    let mut buffer =
+                        String::with_capacity(pretty.len() - pretty.lines().count() * delta);
+
+                    for line in pretty.lines() {
+                        buffer.push_str(&line[delta..]);
+                        buffer.push('\n');
+                    }
+
+                    buffer
+                }
             }
-        } else {
-            format_with_host(&file_path, block.content.into_owned(), &HashMap::new())?
         };
 
         Ok(Block {
@@ -149,13 +164,26 @@ mod test {
             indent_width: 2,
         };
 
-        let raw = "<template><div></div></template>";
-        let pretty = format(Path::new("file.vue"), raw, &config, |_, raw, _| Ok(raw)).unwrap();
+        assert_eq!(
+            format(
+                Path::new("file.vue"),
+                "<template><div></div></template>",
+                &config,
+                |_, raw, _| Ok(raw)
+            )
+            .unwrap(),
+            "<template>\n  <div></div>\n</template>"
+        );
 
-        assert_eq!(pretty, "<template>\n  <div></div>\n</template>");
-
-        let pretty = format(Path::new("file.vue"), &pretty, &config, |_, raw, _| Ok(raw)).unwrap();
-
-        assert_eq!(pretty, "<template>\n  <div></div>\n</template>");
+        assert_eq!(
+            format(
+                Path::new("file.vue"),
+                "<template>\n  <div></div>\n  <div></div>\n</template>",
+                &config,
+                |_, raw, _| Ok(raw)
+            )
+            .unwrap(),
+            "<template>\n  <div></div>\n  <div></div>\n</template>"
+        );
     }
 }

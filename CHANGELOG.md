@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog], and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- `indentTemplate` now works correctly when the content couldn't be
+  formatted through dprint.
+- Block indentation width is now computed and adjusted according to the configuration.
+
 ## [0.3.2] - 2022-02-03
 
 ## [0.3.1] - 2022-01-29
