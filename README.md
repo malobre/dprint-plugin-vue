@@ -51,3 +51,11 @@ dprint, then:
 | `indentTemplate` | `true`  | Indent the content of the `<template>` tag |
 | `indentWidth`    | `2`     | Width of the indentation                   |
 | `useTabs`        | `false` | Use tabs for indentation                   |
+
+## Building
+
+Run
+
+```shell
+cargo build --release --target=wasm32-unknown-unknown
+```
