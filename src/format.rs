@@ -30,72 +30,83 @@ pub fn format(
 
     let sections = vue_sfc::parse(content)?;
 
-    for mut section in sections {
+    for section in sections {
         if let Section::Block(block) = section {
-            let lang = block
-                .attributes
-                .iter()
-                .find_map(|(name, value)| match (name.as_str(), value) {
-                    ("lang", Some(value)) => Some(value.as_str()),
-                    _ => None,
-                })
-                .or_else(|| default_lang(&block.name));
-
-            if let Some(lang) = lang {
-                let file_path = PathBuf::from(format!("file.vue.{lang}"));
-
-                let pretty = if block.name.as_str() == "template" && config.indent_template {
-                    // We compute a hash to check if file content was formatted.
-                    // If the content was formatted, it is indented.
-                    // TODO: Remove hash check, blocked by:
-                    // <https://github.com/dprint/dprint/issues/462>.
-                    let original_hash = blake3::hash(block.content.as_bytes());
-
-                    let pretty =
-                        format_with_host(&file_path, block.content.into_owned(), &HashMap::new())?;
-
-                    let pretty_hash = blake3::hash(pretty.as_bytes());
-
-                    if original_hash == pretty_hash {
-                        pretty
-                    } else {
-                        let indent_width = usize::from(config.indent_width);
-
-                        let mut buffer = String::with_capacity(
-                            pretty.len() + pretty.lines().count() * indent_width,
-                        );
-
-                        for line in pretty.lines() {
-                            buffer.extend(
-                                repeat(if config.use_tabs { '\t' } else { ' ' }).take(indent_width),
-                            );
-                            buffer.push_str(line);
-                            buffer.push('\n');
-                        }
-
-                        buffer
-                    }
-                } else {
-                    format_with_host(&file_path, block.content.into_owned(), &HashMap::new())?
-                };
-
-                section = Section::Block(Block {
-                    name: block.name,
-                    attributes: block.attributes,
-                    content: Cow::Owned(pretty),
-                });
-            } else {
-                section = Section::Block(block);
-            }
+            writeln!(
+                &mut buffer,
+                "{}",
+                format_block(block, config, &mut format_with_host)?
+            )?;
+        } else {
+            writeln!(&mut buffer, "{}", section)?;
         }
 
-        writeln!(&mut buffer, "{}", section)?;
         writeln!(&mut buffer)?;
     }
 
     buffer.truncate(buffer.trim_end().len());
 
     Ok(buffer)
+}
+
+fn format_block<'a>(
+    block: Block<'a>,
+    config: &Configuration,
+    format_with_host: &mut impl FnMut(&Path, String, &ConfigKeyMap) -> Result<String>,
+) -> Result<Block<'a>> {
+    let lang = block
+        .attributes
+        .iter()
+        .find_map(|(name, value)| match (name.as_str(), value) {
+            ("lang", Some(value)) => Some(value.as_str()),
+            _ => None,
+        })
+        .or_else(|| default_lang(&block.name));
+
+    if let Some(lang) = lang {
+        let file_path = PathBuf::from(format!("file.vue.{lang}"));
+
+        let pretty = if block.name.as_str() == "template" && config.indent_template {
+            // We compute a hash to check if file content was formatted.
+            // If the content was formatted, it is indented.
+            // TODO: Remove hash check, blocked by:
+            // <https://github.com/dprint/dprint/issues/462>.
+            let original_hash = blake3::hash(block.content.as_bytes());
+
+            let pretty = format_with_host(&file_path, block.content.into_owned(), &HashMap::new())?;
+
+            let pretty_hash = blake3::hash(pretty.as_bytes());
+
+            if original_hash == pretty_hash {
+                pretty
+            } else {
+                let indent_width = usize::from(config.indent_width);
+
+                let mut buffer =
+                    String::with_capacity(pretty.len() + pretty.lines().count() * indent_width);
+
+                for line in pretty.lines() {
+                    buffer.extend(
+                        repeat(if config.use_tabs { '\t' } else { ' ' }).take(indent_width),
+                    );
+                    buffer.push_str(line);
+                    buffer.push('\n');
+                }
+
+                buffer
+            }
+        } else {
+            format_with_host(&file_path, block.content.into_owned(), &HashMap::new())?
+        };
+
+        Ok(Block {
+            name: block.name,
+            attributes: block.attributes,
+            content: Cow::Owned(pretty),
+        })
+    } else {
+        Ok(block)
+    }
 }
 
 #[cfg(test)]
