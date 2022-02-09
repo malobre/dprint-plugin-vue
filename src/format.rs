@@ -44,8 +44,9 @@ pub fn format(
             if let Some(lang) = lang {
                 let file_path = PathBuf::from(format!("file.vue.{lang}"));
 
-                if block.name.as_str() == "template" && config.indent_template {
-                    // We compute a Hash to check if file content was formatted.
+                let pretty = if block.name.as_str() == "template" && config.indent_template {
+                    // We compute a hash to check if file content was formatted.
+                    // If the content was formatted, it is indented.
                     // TODO: Remove hash check, blocked by:
                     // <https://github.com/dprint/dprint/issues/462>.
                     let original_hash = blake3::hash(block.content.as_bytes());
@@ -55,8 +56,9 @@ pub fn format(
 
                     let pretty_hash = blake3::hash(pretty.as_bytes());
 
-                    // Only indent if file was formatted.
-                    let content = if original_hash != pretty_hash {
+                    if original_hash == pretty_hash {
+                        pretty
+                    } else {
                         let indent_width = usize::from(config.indent_width);
 
                         let mut buffer = String::with_capacity(
@@ -72,25 +74,16 @@ pub fn format(
                         }
 
                         buffer
-                    } else {
-                        pretty
-                    };
-
-                    section = Section::Block(Block {
-                        name: block.name,
-                        attributes: block.attributes,
-                        content: Cow::Owned(content),
-                    });
+                    }
                 } else {
-                    let pretty =
-                        format_with_host(&file_path, block.content.into_owned(), &HashMap::new())?;
+                    format_with_host(&file_path, block.content.into_owned(), &HashMap::new())?
+                };
 
-                    section = Section::Block(Block {
-                        name: block.name,
-                        attributes: block.attributes,
-                        content: Cow::Owned(pretty),
-                    });
-                }
+                section = Section::Block(Block {
+                    name: block.name,
+                    attributes: block.attributes,
+                    content: Cow::Owned(pretty),
+                });
             } else {
                 section = Section::Block(block);
             }
@@ -104,6 +97,7 @@ pub fn format(
 
     Ok(buffer)
 }
+
 #[cfg(test)]
 mod test {
     use std::path::{Path, PathBuf};
