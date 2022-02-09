@@ -5,7 +5,7 @@ Format Vue SFC.
 This plugin format root-level blocks through `dprint`, meaning you will need to
 install plugins for the languages contained in your Vue SFCs.
 
-## Language detection
+## Block default language
 
 Unless a `lang` attribute is present:
 
