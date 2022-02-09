@@ -28,23 +28,24 @@ pub fn format(
 ) -> Result<String> {
     let mut buffer = String::new();
 
-    let sections = vue_sfc::parse(content)?;
+    let mut sections = vue_sfc::parse(content)?.into_iter().peekable();
 
-    for section in sections {
+    while let Some(section) = sections.next() {
         if let Section::Block(block) = section {
-            writeln!(
+            write!(
                 &mut buffer,
                 "{}",
                 format_block(block, config, &mut format_with_host)?
             )?;
         } else {
-            writeln!(&mut buffer, "{}", section)?;
+            write!(&mut buffer, "{}", section)?;
         }
 
-        writeln!(&mut buffer)?;
+        if sections.peek().is_some() {
+            writeln!(&mut buffer)?;
+            writeln!(&mut buffer)?;
+        }
     }
-
-    buffer.truncate(buffer.trim_end().len());
 
     Ok(buffer)
 }
