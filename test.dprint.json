@@ -3,7 +3,7 @@
   "includes": ["test/*.vue"],
   "excludes": [],
   "plugins": [
-    "https://plugins.dprint.dev/typescript-0.62.0.wasm",
+    "https://plugins.dprint.dev/typescript-0.62.2.wasm",
     "./target/wasm32-unknown-unknown/release/dprint_plugin_vue.wasm"
   ]
 }
