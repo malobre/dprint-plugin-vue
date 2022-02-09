@@ -2,19 +2,18 @@
 
 Format Vue SFC.
 
-This plugin only parses root-level blocks, extract their content, and format
-them through `dprint` according to the `lang` attribute or a default:
+This plugin format root-level blocks through `dprint`, meaning you will need to
+install plugins for the languages contained in your Vue SFCs.
+
+## Language detection
+
+Unless a `lang` attribute is present:
 
 | Block      | Default |
 | ---------- | ------- |
 | `script`   | `js`    |
 | `template` | `html`  |
 | `style`    | `css`   |
-
-This means you also need to install plugins for languages contained in your Vue
-SFC, such as [`dprint-plugin-typescript`] for JavaScript / TypeScript.
-
-[`dprint-plugin-typescript`]: https://github.com/dprint/dprint-plugin-typescript
 
 ## Usage
 
