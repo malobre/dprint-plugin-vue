@@ -11,14 +11,15 @@ them through `dprint` according to the `lang` attribute or a default:
 | `template` | `html`  |
 | `style`    | `css`   |
 
-This means you also need to install plugins for languages contained in your Vue SFC, such as
-[`dprint-plugin-typescript`] for JavaScript / TypeScript.
+This means you also need to install plugins for languages contained in your Vue
+SFC, such as [`dprint-plugin-typescript`] for JavaScript / TypeScript.
 
 [`dprint-plugin-typescript`]: https://github.com/dprint/dprint-plugin-typescript
 
 ## Usage
 
-[Install](https://dprint.dev/install) and [setup](https://dprint.dev/setup) dprint, then:
+[Install](https://dprint.dev/install) and [setup](https://dprint.dev/setup)
+dprint, then:
 
 1. Run
    ```shell

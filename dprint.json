@@ -4,6 +4,9 @@
   "excludes": [
     "target"
   ],
+  "markdown": {
+    "textWrap": "always"
+  },
   "plugins": [
     "https://plugins.dprint.dev/json-0.14.1.wasm",
     "https://plugins.dprint.dev/markdown-0.12.2.wasm",
