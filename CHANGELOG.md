@@ -15,6 +15,10 @@ The format is based on [Keep a Changelog], and this project adheres to
 
 ## [0.3.2] - 2022-02-03
 
+### Added
+
+- Plugin can now be updated through `dprint config update`.
+
 ## [0.3.1] - 2022-01-29
 
 ### Fixed
