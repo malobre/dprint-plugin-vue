@@ -72,7 +72,14 @@ fn format_block<'a>(
 
             let indent_width = pretty
                 .lines()
-                .map(|line| line.len() - line.trim_start().len())
+                .filter_map(|line| {
+                    let trimed_line = line.trim_start();
+                    if trimed_line.is_empty() {
+                        None
+                    } else {
+                        Some(line.len() - trimed_line.len())
+                    }
+                })
                 .min()
                 .unwrap_or(0);
 
@@ -178,12 +185,12 @@ mod test {
         assert_eq!(
             format(
                 Path::new("file.vue"),
-                "<template>\n  <div></div>\n  <div></div>\n</template>",
+                "<template>\n  <div></div>\n\n  <div></div>\n</template>",
                 &config,
                 |_, raw, _| Ok(raw)
             )
             .unwrap(),
-            "<template>\n  <div></div>\n  <div></div>\n</template>"
+            "<template>\n  <div></div>\n\n  <div></div>\n</template>"
         );
     }
 }
