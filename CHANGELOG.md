@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog], and this project adheres to
 
 ## [Unreleased]
 
+## [0.4.2] - 2022-03-21
+
 ### Fixed
 
 - Empty lines are now correctly handled when computing template indentation.
