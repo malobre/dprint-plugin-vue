@@ -32,17 +32,16 @@ pub fn format(
 
     while let Some(section) = sections.next() {
         if let Section::Block(block) = section {
-            write!(
+            writeln!(
                 &mut buffer,
                 "{}",
                 format_block(block, config, &mut format_with_host)?
             )?;
         } else {
-            write!(&mut buffer, "{}", section)?;
+            writeln!(&mut buffer, "{}", section)?;
         }
 
         if sections.peek().is_some() {
-            writeln!(&mut buffer)?;
             writeln!(&mut buffer)?;
         }
     }

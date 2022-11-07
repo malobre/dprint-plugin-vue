@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog], and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- Always print a newline at EOF.
+
 ## [0.4.2] - 2022-03-21
 
 ### Fixed
