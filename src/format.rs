@@ -1,6 +1,5 @@
 use std::borrow::Cow;
 use std::cmp::Ordering;
-use std::collections::HashMap;
 use std::fmt::Write;
 use std::iter::repeat;
 use std::path::Path;
@@ -25,7 +24,7 @@ pub fn format(
     _path: &Path,
     content: &str,
     config: &Configuration,
-    mut format_with_host: impl FnMut(&Path, String, &ConfigKeyMap) -> Result<String>,
+    mut format_with_host: impl FnMut(&Path, String, &ConfigKeyMap) -> Result<Option<String>>,
 ) -> Result<String> {
     let mut buffer = String::new();
 
@@ -54,7 +53,7 @@ pub fn format(
 fn format_block<'a>(
     block: Block<'a>,
     config: &Configuration,
-    format_with_host: &mut impl FnMut(&Path, String, &ConfigKeyMap) -> Result<String>,
+    format_with_host: &mut impl FnMut(&Path, String, &ConfigKeyMap) -> Result<Option<String>>,
 ) -> Result<Block<'a>> {
     let lang = block
         .attributes
@@ -68,7 +67,9 @@ fn format_block<'a>(
     if let Some(lang) = lang {
         let pretty = {
             let file_path = PathBuf::from(format!("file.vue.{lang}"));
-            let pretty = format_with_host(&file_path, block.content.into_owned(), &HashMap::new())?;
+            let Some(pretty) = format_with_host(&file_path, block.content.to_string(), &ConfigKeyMap::new())? else {
+                return Ok(block);
+            };
 
             let indent_width = pretty
                 .lines()
@@ -154,7 +155,7 @@ mod test {
 
         format(Path::new("file.vue"), raw, &config, |path, content, _| {
             buffer.push((path.to_owned(), content.clone()));
-            Ok(content)
+            Ok(Some(content))
         })
         .unwrap();
 
@@ -176,7 +177,7 @@ mod test {
                 Path::new("file.vue"),
                 "<template><div></div></template>",
                 &config,
-                |_, raw, _| Ok(raw)
+                |_, raw, _| Ok(Some(raw))
             )
             .unwrap(),
             "<template>\n  <div></div>\n</template>"
@@ -187,7 +188,7 @@ mod test {
                 Path::new("file.vue"),
                 "<template>\n  <div></div>\n\n  <div></div>\n</template>",
                 &config,
-                |_, raw, _| Ok(raw)
+                |_, raw, _| Ok(Some(raw))
             )
             .unwrap(),
             "<template>\n  <div></div>\n\n  <div></div>\n</template>"

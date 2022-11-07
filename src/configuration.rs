@@ -3,7 +3,7 @@ use dprint_core::configuration::get_value;
 use dprint_core::configuration::ConfigKeyMap;
 use dprint_core::configuration::GlobalConfiguration;
 use dprint_core::configuration::ResolveConfigurationResult;
-use dprint_core::configuration::DEFAULT_GLOBAL_CONFIGURATION;
+use dprint_core::configuration::RECOMMENDED_GLOBAL_CONFIGURATION;
 use serde::Serialize;
 
 #[derive(Debug, Clone, Copy, Serialize)]
@@ -18,8 +18,8 @@ impl Default for Configuration {
     fn default() -> Self {
         Self {
             indent_template: true,
-            use_tabs: DEFAULT_GLOBAL_CONFIGURATION.use_tabs,
-            indent_width: DEFAULT_GLOBAL_CONFIGURATION.indent_width,
+            use_tabs: RECOMMENDED_GLOBAL_CONFIGURATION.use_tabs,
+            indent_width: RECOMMENDED_GLOBAL_CONFIGURATION.indent_width,
         }
     }
 }
@@ -38,7 +38,7 @@ impl Configuration {
                 "useTabs",
                 global_config
                     .use_tabs
-                    .unwrap_or(DEFAULT_GLOBAL_CONFIGURATION.use_tabs),
+                    .unwrap_or(RECOMMENDED_GLOBAL_CONFIGURATION.use_tabs),
                 &mut diagnostics,
             ),
             indent_width: get_value(
@@ -46,7 +46,7 @@ impl Configuration {
                 "indentWidth",
                 global_config
                     .indent_width
-                    .unwrap_or(DEFAULT_GLOBAL_CONFIGURATION.indent_width),
+                    .unwrap_or(RECOMMENDED_GLOBAL_CONFIGURATION.indent_width),
                 &mut diagnostics,
             ),
         };
