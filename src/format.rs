@@ -86,6 +86,8 @@ fn format_block<'a>(
             let desired_indent_width =
                 if block.name.as_str() == "template" && config.indent_template {
                     usize::from(config.indent_width)
+                } else if block.name.as_str() == "script" && config.indent_script {
+                    usize::from(config.indent_width)
                 } else {
                     0
                 };

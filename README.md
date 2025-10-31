@@ -49,6 +49,7 @@ dprint, then:
 | Key              | Default | Description                                |
 | ---------------- | ------- | ------------------------------------------ |
 | `indentTemplate` | `true`  | Indent the content of the `<template>` tag |
+| `indentScript`   | `false` | Indent the content of the `<script>` tag   |
 | `indentWidth`    | `2`     | Width of the indentation                   |
 | `useTabs`        | `false` | Use tabs for indentation                   |
 

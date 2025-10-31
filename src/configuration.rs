@@ -10,6 +10,7 @@ use serde::Serialize;
 #[serde(rename_all = "camelCase")]
 pub struct Configuration {
     pub indent_template: bool,
+    pub indent_script: bool,
     pub use_tabs: bool,
     pub indent_width: u8,
 }
@@ -18,6 +19,7 @@ impl Default for Configuration {
     fn default() -> Self {
         Self {
             indent_template: true,
+            indent_script: false,
             use_tabs: RECOMMENDED_GLOBAL_CONFIGURATION.use_tabs,
             indent_width: RECOMMENDED_GLOBAL_CONFIGURATION.indent_width,
         }
@@ -33,6 +35,7 @@ impl Configuration {
 
         let resolved_config = Configuration {
             indent_template: get_value(&mut config, "indentTemplate", true, &mut diagnostics),
+            indent_script: get_value(&mut config, "indentScript", false, &mut diagnostics),
             use_tabs: get_value(
                 &mut config,
                 "useTabs",
