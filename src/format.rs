@@ -66,7 +66,9 @@ fn format_block<'a>(
     if let Some(lang) = lang {
         let pretty = {
             let file_path = PathBuf::from(format!("file.vue.{lang}"));
-            let Some(pretty) = format_with_host(&file_path, block.content.to_string(), &ConfigKeyMap::new())? else {
+            let Some(pretty) =
+                format_with_host(&file_path, block.content.to_string(), &ConfigKeyMap::new())?
+            else {
                 return Ok(block);
             };
 
