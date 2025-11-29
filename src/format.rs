@@ -148,6 +148,7 @@ mod test {
     fn test_format_with_host() {
         let config = Configuration {
             indent_template: true,
+            indent_script: true,
             use_tabs: false,
             indent_width: 2,
         };
@@ -171,6 +172,7 @@ mod test {
     fn test_indent_template() {
         let config = Configuration {
             indent_template: true,
+            indent_script: true,
             use_tabs: false,
             indent_width: 2,
         };
