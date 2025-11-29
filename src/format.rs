@@ -185,7 +185,7 @@ mod test {
                 |_, raw, _| Ok(Some(raw))
             )
             .unwrap(),
-            "<template>\n  <div></div>\n</template>"
+            "<template>\n  <div></div>\n</template>\n"
         );
 
         assert_eq!(
@@ -196,7 +196,7 @@ mod test {
                 |_, raw, _| Ok(Some(raw))
             )
             .unwrap(),
-            "<template>\n  <div></div>\n\n  <div></div>\n</template>"
+            "<template>\n  <div></div>\n\n  <div></div>\n</template>\n"
         );
     }
 }
